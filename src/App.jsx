@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import StudyTimer from './StudyTimer';
-import './App.css';
 import StudyStats from './StudyStats';
+import './App.css';
 
 const DEFAULT_TASKS = [
   { id: 1, title: 'Review React State & Props', subject: 'Web Dev', completed: false },
@@ -15,10 +15,8 @@ function App() {
   });
 
   const [newTaskTitle, setNewTaskTitle] = useState('');
-  const [newTaskSubject, setNewTaskSubject] = useState('General');
-  
-
-  const [filter, setFilter] = useState('all'); 
+  const [newTaskSubject, setNewTaskSubject] = useState('Web Dev');
+  const [filter, setFilter] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [subjectFilter, setSubjectFilter] = useState('All');
 
@@ -37,148 +35,187 @@ function App() {
       completed: false,
     };
 
-    setTasks([...tasks, newTask]);
+    setTasks([newTask, ...tasks]);
     setNewTaskTitle('');
   }
 
   function handleToggleTask(taskId) {
-    const updatedTasks = tasks.map((task) =>
-      task.id === taskId ? { ...task, completed: !task.completed } : task
+    setTasks(
+      tasks.map((task) =>
+        task.id === taskId ? { ...task, completed: !task.completed } : task
+      )
     );
-    setTasks(updatedTasks);
   }
 
   function handleDeleteTask(taskId) {
-    const remainingTasks = tasks.filter((task) => task.id !== taskId);
-    setTasks(remainingTasks);
+    setTasks(tasks.filter((task) => task.id !== taskId));
   }
 
   const completedCount = tasks.filter((task) => task.completed).length;
 
-  
   const filteredTasks = tasks.filter((task) => {
-    const matchesTab = 
+    const matchesTab =
       filter === 'active' ? !task.completed :
       filter === 'completed' ? task.completed : true;
-
-    const matchesSubject = 
+    const matchesSubject =
       subjectFilter === 'All' ? true : task.subject === subjectFilter;
-
-    const matchesSearch = 
+    const matchesSearch =
       task.title.toLowerCase().includes(searchQuery.toLowerCase());
 
     return matchesTab && matchesSubject && matchesSearch;
   });
 
+  // Helper to get color class for subject tags
+  function getSubjectClass(subject) {
+    return `tag-${subject.toLowerCase().replace(/\s+/g, '-')}`;
+  }
+
   return (
-    <div className="app-container">
-      <header className="header">
-        <div>
-          <h1>StudyOS</h1>
-          <p className="subtitle">Personal Study Workspace & Task Tracker</p>
+    <div className="app-wrapper">
+      {/* Top Navbar */}
+      <header className="top-nav">
+        <div className="brand">
+          <div className="brand-logo">⚡</div>
+          <div>
+            <h1>StudyOS</h1>
+            <p className="subtitle">Personal Command Center & Focus Workspace</p>
+          </div>
         </div>
-        <div className="stats-badge">
-          {completedCount} / {tasks.length} Completed
+        <div className="header-badges">
+          <span className="live-dot"></span>
+          <span className="stats-badge">
+            {completedCount} of {tasks.length} Tasks Done
+          </span>
         </div>
       </header>
 
-      
-      <StudyTimer />
-<StudyStats tasks={tasks} />
+      {/* Main Two-Column Bento Grid */}
+      <main className="dashboard-grid">
+        {/* Left Column: Focus Timer & Analytics */}
+        <aside className="left-panel">
+          <StudyTimer />
+          <StudyStats tasks={tasks} />
+        </aside>
 
-      <form className="task-form" onSubmit={handleAddTask}>
-        <input
-          type="text"
-          placeholder="What do you need to study today?"
-          value={newTaskTitle}
-          onChange={(e) => setNewTaskTitle(e.target.value)}
-          className="task-input"
-        />
-        <select
-          value={newTaskSubject}
-          onChange={(e) => setNewTaskSubject(e.target.value)}
-          className="subject-select"
-        >
-          <option value="General">General</option>
-          <option value="Web Dev">Web Dev</option>
-          <option value="Math">Math</option>
-          <option value="Science">Science</option>
-          <option value="Literature">Literature</option>
-        </select>
-        <button type="submit" className="add-btn">
-          Add Task
-        </button>
-      </form>
+        {/* Right Column: Interactive Task Workspace */}
+        <section className="right-panel">
+          <div className="panel-card">
+            <div className="panel-header">
+              <h2>Action Items</h2>
+              <div className="filter-tabs">
+                <button
+                  className={`filter-btn ${filter === 'all' ? 'active' : ''}`}
+                  onClick={() => setFilter('all')}
+                >
+                  All ({tasks.length})
+                </button>
+                <button
+                  className={`filter-btn ${filter === 'active' ? 'active' : ''}`}
+                  onClick={() => setFilter('active')}
+                >
+                  Active ({tasks.length - completedCount})
+                </button>
+                <button
+                  className={`filter-btn ${filter === 'completed' ? 'active' : ''}`}
+                  onClick={() => setFilter('completed')}
+                >
+                  Done ({completedCount})
+                </button>
+              </div>
+            </div>
 
-      
-      <div className="toolbar">
-        <input
-          type="text"
-          placeholder="Search tasks..."
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          className="search-input"
-        />
-        <select
-          value={subjectFilter}
-          onChange={(e) => setSubjectFilter(e.target.value)}
-          className="subject-select"
-        >
-          <option value="All">All Subjects</option>
-          <option value="General">General</option>
-          <option value="Web Dev">Web Dev</option>
-          <option value="Math">Math</option>
-          <option value="Science">Science</option>
-          <option value="Literature">Literature</option>
-        </select>
-      </div>
-
-      <div className="filter-tabs">
-        <button
-          className={`filter-btn ${filter === 'all' ? 'active' : ''}`}
-          onClick={() => setFilter('all')}
-        >
-          All ({tasks.length})
-        </button>
-        <button
-          className={`filter-btn ${filter === 'active' ? 'active' : ''}`}
-          onClick={() => setFilter('active')}
-        >
-          Active ({tasks.filter((t) => !t.completed).length})
-        </button>
-        <button
-          className={`filter-btn ${filter === 'completed' ? 'active' : ''}`}
-          onClick={() => setFilter('completed')}
-        >
-          Completed ({completedCount})
-        </button>
-      </div>
-
-      <ul className="task-list">
-        {filteredTasks.length === 0 ? (
-          <p className="empty-state">No matching tasks found.</p>
-        ) : (
-          filteredTasks.map((task) => (
-            <li key={task.id} className={`task-item ${task.completed ? 'done' : ''}`}>
-              <label className="task-label">
-                <input
-                  type="checkbox"
-                  checked={task.completed}
-                  onChange={() => handleToggleTask(task.id)}
-                />
-                <span className="task-title">{task.title}</span>
-                <span className="subject-tag">{task.subject}</span>
-              </label>
-              <button
-                onClick={() => handleDeleteTask(task.id)}
-                className="delete-btn"
+            {/* Add Task Bar */}
+            <form className="task-form" onSubmit={handleAddTask}>
+              <input
+                type="text"
+                placeholder="What are we conquering next?"
+                value={newTaskTitle}
+                onChange={(e) => setNewTaskTitle(e.target.value)}
+                className="task-input"
+              />
+              <select
+                value={newTaskSubject}
+                onChange={(e) => setNewTaskSubject(e.target.value)}
+                className="subject-select"
               >
-                Delete
+                <option value="Web Dev">💻 Web Dev</option>
+                <option value="Math">📐 Math</option>
+                <option value="Science">🔬 Science</option>
+                <option value="Literature">📚 Literature</option>
+                <option value="General">📌 General</option>
+              </select>
+              <button type="submit" className="add-btn">
+                + Add Task
               </button>
-            </li>
-          ))
-        )}
-      </ul>
+            </form>
+
+            {/* Search & Subject Filter Toolbar */}
+            <div className="toolbar">
+              <div className="search-box">
+                <span className="search-icon">🔍</span>
+                <input
+                  type="text"
+                  placeholder="Filter tasks by keyword..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="search-input"
+                />
+              </div>
+              <select
+                value={subjectFilter}
+                onChange={(e) => setSubjectFilter(e.target.value)}
+                className="subject-select filter-select"
+              >
+                <option value="All">All Subjects</option>
+                <option value="Web Dev">Web Dev</option>
+                <option value="Math">Math</option>
+                <option value="Science">Science</option>
+                <option value="Literature">Literature</option>
+                <option value="General">General</option>
+              </select>
+            </div>
+
+            {/* Task List */}
+            <ul className="task-list">
+              {filteredTasks.length === 0 ? (
+                <div className="empty-state">
+                  <div className="empty-icon">✨</div>
+                  <p>No tasks match your filter. Time to add a new goal or take a run!</p>
+                </div>
+              ) : (
+                filteredTasks.map((task) => (
+                  <li
+                    key={task.id}
+                    className={`task-item ${task.completed ? 'done' : ''}`}
+                  >
+                    <label className="task-label">
+                      <input
+                        type="checkbox"
+                        checked={task.completed}
+                        onChange={() => handleToggleTask(task.id)}
+                      />
+                      <span className="custom-checkbox"></span>
+                      <span className="task-title">{task.title}</span>
+                    </label>
+                    <div className="task-actions">
+                      <span className={`subject-tag ${getSubjectClass(task.subject)}`}>
+                        {task.subject}
+                      </span>
+                      <button
+                        onClick={() => handleDeleteTask(task.id)}
+                        className="delete-btn"
+                        title="Delete task"
+                      >
+                        ✕
+                      </button>
+                    </div>
+                  </li>
+                ))
+              )}
+            </ul>
+          </div>
+        </section>
+      </main>
     </div>
   );
 }
