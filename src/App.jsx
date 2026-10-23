@@ -16,8 +16,10 @@ function App() {
   const [newTaskTitle, setNewTaskTitle] = useState('');
   const [newTaskSubject, setNewTaskSubject] = useState('General');
   
-  // NEW: Filter state ('all', 'active', 'completed')
-  const [filter, setFilter] = useState('all');
+  // NEW STATES
+  const [filter, setFilter] = useState('all'); 
+  const [searchQuery, setSearchQuery] = useState('');
+  const [subjectFilter, setSubjectFilter] = useState('All');
 
   useEffect(() => {
     localStorage.setItem('studyos_tasks', JSON.stringify(tasks));
@@ -52,11 +54,19 @@ function App() {
 
   const completedCount = tasks.filter((task) => task.completed).length;
 
-  // NEW: Filter the tasks based on the active filter state
+  
   const filteredTasks = tasks.filter((task) => {
-    if (filter === 'active') return !task.completed;
-    if (filter === 'completed') return task.completed;
-    return true; // 'all'
+    const matchesTab = 
+      filter === 'active' ? !task.completed :
+      filter === 'completed' ? task.completed : true;
+
+    const matchesSubject = 
+      subjectFilter === 'All' ? true : task.subject === subjectFilter;
+
+    const matchesSearch = 
+      task.title.toLowerCase().includes(searchQuery.toLowerCase());
+
+    return matchesTab && matchesSubject && matchesSearch;
   });
 
   return (
@@ -97,7 +107,29 @@ function App() {
         </button>
       </form>
 
-      {/* NEW: Filter Tabs Navigation */}
+      
+      <div className="toolbar">
+        <input
+          type="text"
+          placeholder="Search tasks..."
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          className="search-input"
+        />
+        <select
+          value={subjectFilter}
+          onChange={(e) => setSubjectFilter(e.target.value)}
+          className="subject-select"
+        >
+          <option value="All">All Subjects</option>
+          <option value="General">General</option>
+          <option value="Web Dev">Web Dev</option>
+          <option value="Math">Math</option>
+          <option value="Science">Science</option>
+          <option value="Literature">Literature</option>
+        </select>
+      </div>
+
       <div className="filter-tabs">
         <button
           className={`filter-btn ${filter === 'all' ? 'active' : ''}`}
@@ -121,7 +153,7 @@ function App() {
 
       <ul className="task-list">
         {filteredTasks.length === 0 ? (
-          <p className="empty-state">No tasks found for this filter.</p>
+          <p className="empty-state">No matching tasks found.</p>
         ) : (
           filteredTasks.map((task) => (
             <li key={task.id} className={`task-item ${task.completed ? 'done' : ''}`}>

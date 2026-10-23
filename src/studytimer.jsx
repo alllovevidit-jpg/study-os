@@ -1,11 +1,39 @@
 import { useState, useEffect } from 'react';
 
 function StudyTimer() {
-  const FOCUS_TIME = 25 * 60; // 25 minutes in seconds (1500s)
-  const [secondsLeft, setSecondsLeft] = useState(FOCUS_TIME);
+  const [mode, setMode] = useState('focus'); // 'focus', 'shortBreak', 'longBreak'
+  
+  // Durations in seconds
+  const TIMES = {
+    focus: 25 * 60,
+    shortBreak: 5 * 60,
+    longBreak: 15 * 60,
+  };
+
+  const [secondsLeft, setSecondsLeft] = useState(TIMES.focus);
   const [isRunning, setIsRunning] = useState(false);
 
-  // Runs a 1-second interval timer ONLY when `isRunning` is true
+  // Play a soft beep sound using the Web Audio API when timer hits 0
+  function playAlarm() {
+    try {
+      const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      const oscillator = audioCtx.createOscillator();
+      const gainNode = audioCtx.createGain();
+      
+      oscillator.type = 'sine';
+      oscillator.frequency.setValueAtTime(587.33, audioCtx.currentTime); // D5 note
+      gainNode.gain.setValueAtTime(0.1, audioCtx.currentTime);
+      
+      oscillator.connect(gainNode);
+      gainNode.connect(audioCtx.destination);
+      
+      oscillator.start();
+      oscillator.stop(audioCtx.currentTime + 0.6);
+    } catch {
+      // Fallback if audio context is restricted
+    }
+  }
+
   useEffect(() => {
     if (!isRunning) return;
 
@@ -13,29 +41,54 @@ function StudyTimer() {
       setSecondsLeft((prev) => {
         if (prev <= 1) {
           setIsRunning(false);
+          playAlarm();
           return 0;
         }
         return prev - 1;
       });
     }, 1000);
 
-    // CLEANUP: Stops the background clock if you pause or leave the page
     return () => clearInterval(timerId);
   }, [isRunning]);
 
-  function handleReset() {
+  // Switch timer mode
+  function handleModeChange(newMode) {
     setIsRunning(false);
-    setSecondsLeft(FOCUS_TIME);
+    setMode(newMode);
+    setSecondsLeft(TIMES[newMode]);
   }
 
-  // Convert total seconds (e.g. 1500) into MM:SS format (e.g. "25:00")
+  function handleReset() {
+    setIsRunning(false);
+    setSecondsLeft(TIMES[mode]);
+  }
+
   const minutes = String(Math.floor(secondsLeft / 60)).padStart(2, '0');
   const seconds = String(secondsLeft % 60).padStart(2, '0');
 
   return (
     <div className="timer-card">
       <div>
-        <span className="timer-label">Focus Session</span>
+        <div className="timer-mode-tabs">
+          <button
+            className={`mode-tab ${mode === 'focus' ? 'active' : ''}`}
+            onClick={() => handleModeChange('focus')}
+          >
+            Focus
+          </button>
+          <button
+            className={`mode-tab ${mode === 'shortBreak' ? 'active' : ''}`}
+            onClick={() => handleModeChange('shortBreak')}
+          >
+            Short Break
+          </button>
+          <button
+            className={`mode-tab ${mode === 'longBreak' ? 'active' : ''}`}
+            onClick={() => handleModeChange('longBreak')}
+          >
+            Long Break
+          </button>
+        </div>
         <div className="timer-display">
           {minutes}:{seconds}
         </div>
@@ -45,7 +98,7 @@ function StudyTimer() {
           onClick={() => setIsRunning(!isRunning)}
           className="timer-btn primary"
         >
-          {isRunning ? 'Pause' : 'Start Focus'}
+          {isRunning ? 'Pause' : 'Start'}
         </button>
         <button onClick={handleReset} className="timer-btn secondary">
           Reset
