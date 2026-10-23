@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import './App.css';
+import StudyTimer from './studytimer';
 
 function App() {
   // 1. STATE: Holds our list of study tasks and what the user is typing
@@ -55,7 +56,7 @@ function App() {
           {completedCount} / {tasks.length} Completed
         </div>
       </header>
-
+<StudyTimer />
       <form className="task-form" onSubmit={handleAddTask}>
         <input
           type="text"
