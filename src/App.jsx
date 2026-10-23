@@ -1,33 +1,43 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import StudyTimer from './StudyTimer';
 import './App.css';
-import StudyTimer from './studytimer';
+
+const DEFAULT_TASKS = [
+  { id: 1, title: 'Review React State & Props', subject: 'Web Dev', completed: false },
+  { id: 2, title: 'Solve 10 Trigonometry problems', subject: 'Math', completed: true },
+];
 
 function App() {
-  // 1. STATE: Holds our list of study tasks and what the user is typing
-  const [tasks, setTasks] = useState([
-    { id: 1, title: 'Review React State & Props', subject: 'Web Dev', completed: false },
-    { id: 2, title: 'Solve 10 Trigonometry problems', subject: 'Math', completed: true },
-  ]);
+  const [tasks, setTasks] = useState(() => {
+    const savedTasks = localStorage.getItem('studyos_tasks');
+    return savedTasks ? JSON.parse(savedTasks) : DEFAULT_TASKS;
+  });
+
   const [newTaskTitle, setNewTaskTitle] = useState('');
   const [newTaskSubject, setNewTaskSubject] = useState('General');
+  
+  // NEW: Filter state ('all', 'active', 'completed')
+  const [filter, setFilter] = useState('all');
 
-  // 2. HANDLER: Adds a new task when the form is submitted
+  useEffect(() => {
+    localStorage.setItem('studyos_tasks', JSON.stringify(tasks));
+  }, [tasks]);
+
   function handleAddTask(e) {
-    e.preventDefault(); // Stops the browser from refreshing the page
-    if (!newTaskTitle.trim()) return; // Ignore empty submissions
+    e.preventDefault();
+    if (!newTaskTitle.trim()) return;
 
     const newTask = {
-      id: Date.now(), // Unique ID based on current timestamp
+      id: Date.now(),
       title: newTaskTitle,
       subject: newTaskSubject,
       completed: false,
     };
 
-    setTasks([...tasks, newTask]); // Creates a new array with the added task
-    setNewTaskTitle(''); // Clears the text box
+    setTasks([...tasks, newTask]);
+    setNewTaskTitle('');
   }
 
-  // 3. HANDLER: Flips a task's completed status between true and false
   function handleToggleTask(taskId) {
     const updatedTasks = tasks.map((task) =>
       task.id === taskId ? { ...task, completed: !task.completed } : task
@@ -35,16 +45,20 @@ function App() {
     setTasks(updatedTasks);
   }
 
-  // 4. HANDLER: Deletes a task by filtering it out of the array
   function handleDeleteTask(taskId) {
     const remainingTasks = tasks.filter((task) => task.id !== taskId);
     setTasks(remainingTasks);
   }
 
-  // 5. DERIVED DATA: Calculates progress automatically whenever `tasks` changes
   const completedCount = tasks.filter((task) => task.completed).length;
 
-  // 6. UI (JSX): What actually gets rendered to the screen
+  // NEW: Filter the tasks based on the active filter state
+  const filteredTasks = tasks.filter((task) => {
+    if (filter === 'active') return !task.completed;
+    if (filter === 'completed') return task.completed;
+    return true; // 'all'
+  });
+
   return (
     <div className="app-container">
       <header className="header">
@@ -56,7 +70,9 @@ function App() {
           {completedCount} / {tasks.length} Completed
         </div>
       </header>
-<StudyTimer />
+
+      <StudyTimer />
+
       <form className="task-form" onSubmit={handleAddTask}>
         <input
           type="text"
@@ -81,26 +97,52 @@ function App() {
         </button>
       </form>
 
+      {/* NEW: Filter Tabs Navigation */}
+      <div className="filter-tabs">
+        <button
+          className={`filter-btn ${filter === 'all' ? 'active' : ''}`}
+          onClick={() => setFilter('all')}
+        >
+          All ({tasks.length})
+        </button>
+        <button
+          className={`filter-btn ${filter === 'active' ? 'active' : ''}`}
+          onClick={() => setFilter('active')}
+        >
+          Active ({tasks.filter((t) => !t.completed).length})
+        </button>
+        <button
+          className={`filter-btn ${filter === 'completed' ? 'active' : ''}`}
+          onClick={() => setFilter('completed')}
+        >
+          Completed ({completedCount})
+        </button>
+      </div>
+
       <ul className="task-list">
-        {tasks.map((task) => (
-          <li key={task.id} className={`task-item ${task.completed ? 'done' : ''}`}>
-            <label className="task-label">
-              <input
-                type="checkbox"
-                checked={task.completed}
-                onChange={() => handleToggleTask(task.id)}
-              />
-              <span className="task-title">{task.title}</span>
-              <span className="subject-tag">{task.subject}</span>
-            </label>
-            <button
-              onClick={() => handleDeleteTask(task.id)}
-              className="delete-btn"
-            >
-              Delete
-            </button>
-          </li>
-        ))}
+        {filteredTasks.length === 0 ? (
+          <p className="empty-state">No tasks found for this filter.</p>
+        ) : (
+          filteredTasks.map((task) => (
+            <li key={task.id} className={`task-item ${task.completed ? 'done' : ''}`}>
+              <label className="task-label">
+                <input
+                  type="checkbox"
+                  checked={task.completed}
+                  onChange={() => handleToggleTask(task.id)}
+                />
+                <span className="task-title">{task.title}</span>
+                <span className="subject-tag">{task.subject}</span>
+              </label>
+              <button
+                onClick={() => handleDeleteTask(task.id)}
+                className="delete-btn"
+              >
+                Delete
+              </button>
+            </li>
+          ))
+        )}
       </ul>
     </div>
   );
