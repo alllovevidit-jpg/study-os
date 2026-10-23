@@ -82,7 +82,7 @@ function App() {
         </div>
       </header>
 
-      <StudyTimer />
+      
       <StudyTimer />
 <StudyStats tasks={tasks} />
 
