@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import StudyTimer from './StudyTimer';
 import './App.css';
+import StudyStats from './StudyStats';
 
 const DEFAULT_TASKS = [
   { id: 1, title: 'Review React State & Props', subject: 'Web Dev', completed: false },
@@ -16,7 +17,7 @@ function App() {
   const [newTaskTitle, setNewTaskTitle] = useState('');
   const [newTaskSubject, setNewTaskSubject] = useState('General');
   
-  // NEW STATES
+
   const [filter, setFilter] = useState('all'); 
   const [searchQuery, setSearchQuery] = useState('');
   const [subjectFilter, setSubjectFilter] = useState('All');
@@ -82,6 +83,8 @@ function App() {
       </header>
 
       <StudyTimer />
+      <StudyTimer />
+<StudyStats tasks={tasks} />
 
       <form className="task-form" onSubmit={handleAddTask}>
         <input
